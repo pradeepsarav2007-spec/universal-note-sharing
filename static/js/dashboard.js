@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Check for hash on page load
+
     if (window.location.hash) {
       const hashId = window.location.hash.substring(1);
       const matchBtn = document.querySelector(`.tab-btn[data-target="${hashId}"]`);
@@ -46,14 +47,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 2. Generic Modal Open & Close
-  window.openModal = function(modalId) {
+  window.openModal = function (modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.classList.add('show');
     }
   };
 
-  window.closeModal = function(modalId) {
+  window.closeModal = function (modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.classList.remove('show');
@@ -70,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 3. Confirm Delete Note Setup
-  window.confirmDeleteNote = function(noteId, noteTitle) {
+  window.confirmDeleteNote = function (noteId, noteTitle) {
     const modal = document.getElementById('deleteNoteModal');
     const titleEl = document.getElementById('deleteNoteTitle');
     const formEl = document.getElementById('deleteNoteForm');

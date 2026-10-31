@@ -45,7 +45,7 @@ def main():
     
     try:
         # Push to main branch
-        dulwich.porcelain.push(repo, auth_url, 'refs/heads/main:refs/heads/main')
+        dulwich.porcelain.push(repo, auth_url, 'refs/heads/main:refs/heads/main', force=True)
         print("\n" + "="*60)
         print(" [SUCCESS] Code successfully pushed to GitHub!")
         print(" Repository URL: https://github.com/pradeepsarav2007-spec/universal-note-sharing")
@@ -65,3 +65,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
