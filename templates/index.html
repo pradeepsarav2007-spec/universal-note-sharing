@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Universal Notes Sharing Platform | Explore Free Study Resources & Lecture Notes{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container" style="text-align: center; position: relative; z-index: 2;">
+    
+    <div class="hero-badge">
+      <i class="fa-solid fa-graduation-cap"></i> 100% Free Open Educational Resource Platform
+    </div>
+
+    <h1 class="hero-title">
+      Learn, Share & Succeed with <br>
+      <span class="gradient-text">Universal Lecture Notes</span>
+    </h1>
+
+    <p class="hero-subtitle" style="margin-left: auto; margin-right: auto;">
+      A collaborative academic repository where university students and educators upload class notes, study guides, and exam summaries. Completely free to search, view, and download.
+    </p>
+
+    <!-- Hero Search Bar -->
+    <form action="{{ url_for('library') }}" method="GET" class="hero-search-wrapper" style="margin-left: auto; margin-right: auto;">
+      <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 1.1rem;"></i>
+        <input type="text" name="q" placeholder="Search by topic, subject name, exam code, or keywords..." required>
+      </div>
+
+      <select name="department" aria-label="Select department">
+        <option value="">All Departments</option>
+        {% for dept in departments %}
+          <option value="{{ dept.name }}">{{ dept.name }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn btn-primary btn-lg">
+        <i class="fa-solid fa-magnifying-glass"></i> Search Notes
+      </button>
+    </form>
+
+    <!-- Platform Stats Cards -->
+    <div class="hero-stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fa-solid fa-book-bookmark"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.notes }}</div>
+          <div class="stat-label">Published Notes</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background-color: #ecfdf5; color: #10b981;">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.downloads }}</div>
+          <div class="stat-label">Total Downloads</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background-color: #f5f3ff; color: #8b5cf6;">
+          <i class="fa-solid fa-user-graduate"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.users }}</div>
+          <div class="stat-label">Contributing Scholars</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background-color: #fffbeb; color: #f59e0b;">
+          <i class="fa-solid fa-building-columns"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.departments }}</div>
+          <div class="stat-label">Academic Departments</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Popular Notes Section -->
+<section class="section" style="background-color: #ffffff;">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">
+          <i class="fa-solid fa-fire text-danger" style="color: #ef4444; margin-right: 0.5rem;"></i>
+          Most Popular Notes
+        </h2>
+        <p class="section-subtitle">Highly downloaded study resources recommended by fellow students</p>
+      </div>
+      <a href="{{ url_for('library', sort='popular') }}" class="btn btn-outline-primary btn-sm">
+        View All Popular Notes <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="notes-grid">
+      {% for note in popular_notes %}
+        <div class="note-card">
+          <div class="note-card-top">
+            <span class="file-type-badge file-type-{{ note.file_type.lower() }}">
+              <i class="fa-solid {{ note.file_icon }}"></i> {{ note.file_type.upper() }}
+            </span>
+            <span class="badge-semester">Semester {{ note.semester }}</span>
+          </div>
+
+          <div class="note-card-body">
+            <span class="note-subject-pill">{{ note.department }} &bull; {{ note.subject }}</span>
+            <h3 class="note-card-title">
+              <a href="{{ url_for('note_detail', note_id=note.id) }}">{{ note.title }}</a>
+            </h3>
+            <p class="note-card-desc">{{ note.description }}</p>
+
+            <div class="note-tags-row">
+              {% for tag in note.tag_list[:3] %}
+                <span class="tag-badge">#{{ tag }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="note-card-meta">
+              <div class="note-uploader">
+                <span class="avatar-mini">{{ note.uploader.initials if note.uploader else 'U' }}</span>
+                <span>{{ note.uploader.full_name if note.uploader else 'Anonymous' }}</span>
+              </div>
+              <div class="note-metrics-badge">
+                <span title="Downloads"><i class="fa-solid fa-download"></i> {{ note.download_count }}</span>
+                <span title="Views"><i class="fa-solid fa-eye"></i> {{ note.view_count }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="note-card-footer">
+            <a href="{{ url_for('note_detail', note_id=note.id) }}" class="btn btn-secondary btn-sm" style="flex: 1;">
+              <i class="fa-solid fa-eye"></i> View Details
+            </a>
+            <a href="{{ url_for('download_note', note_id=note.id) }}" class="btn btn-primary btn-sm" title="Quick Download">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Browse by Category / Department Section -->
+<section class="section" style="background-color: var(--bg-body);">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Browse Notes by Department</h2>
+        <p class="section-subtitle">Discover curriculum-aligned notes organized across technical and academic domains</p>
+      </div>
+      <a href="{{ url_for('library') }}" class="btn btn-outline-primary btn-sm">
+        Explore Full Catalog <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="departments-grid">
+      {% for dept in departments %}
+        <a href="{{ url_for('library', department=dept.name) }}" class="department-card">
+          <div class="dept-icon-box">
+            <i class="fa-solid {{ dept.icon }}"></i>
+          </div>
+          <h3 class="dept-name">{{ dept.name }}</h3>
+          <p class="dept-desc">{{ dept.description }}</p>
+          <div class="dept-footer">
+            <span>{{ dept.note_count }} notes available</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Recently Uploaded Notes Section -->
+<section class="section" style="background-color: #ffffff;">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">
+          <i class="fa-solid fa-clock-rotate-left text-primary" style="margin-right: 0.5rem;"></i>
+          Recently Uploaded Notes
+        </h2>
+        <p class="section-subtitle">Fresh study notes and lecture summaries uploaded by students this week</p>
+      </div>
+      <a href="{{ url_for('library', sort='newest') }}" class="btn btn-outline-primary btn-sm">
+        View All Recent Notes <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="notes-grid">
+      {% for note in recent_notes %}
+        <div class="note-card">
+          <div class="note-card-top">
+            <span class="file-type-badge file-type-{{ note.file_type.lower() }}">
+              <i class="fa-solid {{ note.file_icon }}"></i> {{ note.file_type.upper() }}
+            </span>
+            <span class="badge-semester">Semester {{ note.semester }}</span>
+          </div>
+
+          <div class="note-card-body">
+            <span class="note-subject-pill">{{ note.department }} &bull; {{ note.subject }}</span>
+            <h3 class="note-card-title">
+              <a href="{{ url_for('note_detail', note_id=note.id) }}">{{ note.title }}</a>
+            </h3>
+            <p class="note-card-desc">{{ note.description }}</p>
+
+            <div class="note-tags-row">
+              {% for tag in note.tag_list[:3] %}
+                <span class="tag-badge">#{{ tag }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="note-card-meta">
+              <div class="note-uploader">
+                <span class="avatar-mini">{{ note.uploader.initials if note.uploader else 'U' }}</span>
+                <span>{{ note.uploader.full_name if note.uploader else 'Anonymous' }}</span>
+              </div>
+              <div class="note-metrics-badge">
+                <span title="Uploaded date"><i class="fa-regular fa-calendar"></i> {{ note.created_at.strftime('%b %d, %Y') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="note-card-footer">
+            <a href="{{ url_for('note_detail', note_id=note.id) }}" class="btn btn-secondary btn-sm" style="flex: 1;">
+              <i class="fa-solid fa-eye"></i> View Details
+            </a>
+            <a href="{{ url_for('download_note', note_id=note.id) }}" class="btn btn-primary btn-sm" title="Quick Download">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section class="container">
+  <div class="cta-banner">
+    <h2>Help Your Peers. Share Your Knowledge.</h2>
+    <p>
+      Have high quality lecture notes, exam cheat sheets, or lab summaries? 
+      Upload your notes and help thousands of students study effectively and excel in exams.
+    </p>
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+      <a href="{{ url_for('upload') }}" class="btn btn-cta">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Upload Your Notes Now
+      </a>
+      <a href="{{ url_for('library') }}" class="btn btn-outline-primary" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.4);">
+        <i class="fa-solid fa-magnifying-glass"></i> Explore Notes Library
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+

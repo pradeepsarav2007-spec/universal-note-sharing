@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Notes Library | Search & Filter Educational Notes{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+
+  <!-- Header Banner -->
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 0.5rem;">
+      <i class="fa-solid fa-book-open-reader text-primary" style="margin-right: 0.5rem;"></i>
+      Universal Notes Library
+    </h1>
+    <p style="color: var(--text-muted); font-size: 1.05rem;">
+      Browse, search, and download verified study materials, lecture summaries, and university notes.
+    </p>
+  </div>
+
+  <!-- Search & Filter Controls Card -->
+  <div class="filter-panel">
+    <form action="{{ url_for('library') }}" method="GET" id="filterForm">
+      
+      <div class="filter-grid">
+        
+        <!-- Search Keyword -->
+        <div class="filter-group">
+          <label for="q"><i class="fa-solid fa-magnifying-glass"></i> Keyword / Subject / Title</label>
+          <input type="text" name="q" id="q" class="form-control" 
+                 placeholder="Search notes e.g., Calculus, Python, Thermodynamics..." 
+                 value="{{ search_query }}">
+        </div>
+
+        <!-- Department Filter -->
+        <div class="filter-group">
+          <label for="department"><i class="fa-solid fa-building-columns"></i> Department</label>
+          <select name="department" id="department" class="form-select">
+            <option value="all">All Departments</option>
+            {% for dept in departments %}
+              <option value="{{ dept.name }}" {% if selected_dept == dept.name %}selected{% endif %}>
+                {{ dept.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Semester Filter -->
+        <div class="filter-group">
+          <label for="semester"><i class="fa-solid fa-layer-group"></i> Semester</label>
+          <select name="semester" id="semester" class="form-select">
+            <option value="all">All Semesters</option>
+            {% for s in range(1, 9) %}
+              <option value="{{ s }}" {% if selected_semester == s|string %}selected{% endif %}>
+                Semester {{ s }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- File Format Filter -->
+        <div class="filter-group">
+          <label for="format"><i class="fa-solid fa-file"></i> Format</label>
+          <select name="format" id="format" class="form-select">
+            <option value="all">All Formats</option>
+            <option value="pdf" {% if selected_format == 'pdf' %}selected{% endif %}>PDF (.pdf)</option>
+            <option value="doc" {% if selected_format == 'doc' %}selected{% endif %}>Word (.doc / .docx)</option>
+            <option value="ppt" {% if selected_format == 'ppt' %}selected{% endif %}>PowerPoint (.ppt / .pptx)</option>
+            <option value="txt" {% if selected_format == 'txt' %}selected{% endif %}>Text (.txt)</option>
+          </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="submit" class="btn btn-primary" style="height: 42px;">
+            <i class="fa-solid fa-filter"></i> Apply
+          </button>
+          {% if search_query or (selected_dept and selected_dept != 'all') or (selected_semester and selected_semester != 'all') or (selected_format and selected_format != 'all') or sort_by != 'newest' %}
+            <a href="{{ url_for('library') }}" class="btn btn-secondary" style="height: 42px;" title="Reset Filters">
+              <i class="fa-solid fa-rotate-left"></i>
+            </a>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Sorting Sub-Bar -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 0.75rem;">
+        <div style="font-size: 0.875rem; color: var(--text-muted);">
+          Found <strong style="color: var(--text-primary);">{{ total_results }}</strong> notes matching your criteria
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+          <label for="sort" style="color: var(--text-secondary); font-weight: 600;">Sort By:</label>
+          <select name="sort" id="sort" class="form-select" style="width: auto; padding: 0.35rem 0.75rem; font-size: 0.85rem;" onchange="document.getElementById('filterForm').submit();">
+            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+            <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>Most Downloaded</option>
+            <option value="views" {% if sort_by == 'views' %}selected{% endif %}>Most Viewed</option>
+            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title (A-Z)</option>
+            <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+          </select>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Notes Grid -->
+  {% if notes %}
+    <div class="notes-grid">
+      {% for note in notes %}
+        <div class="note-card">
+          <div class="note-card-top">
+            <span class="file-type-badge file-type-{{ note.file_type.lower() }}">
+              <i class="fa-solid {{ note.file_icon }}"></i> {{ note.file_type.upper() }}
+            </span>
+            <div style="display: flex; gap: 0.4rem; align-items: center;">
+              {% if note.is_featured %}
+                <span class="badge-status badge-featured" title="Featured Note">
+                  <i class="fa-solid fa-star"></i> Featured
+                </span>
+              {% endif %}
+              <span class="badge-semester">Sem {{ note.semester }}</span>
+            </div>
+          </div>
+
+          <div class="note-card-body">
+            <span class="note-subject-pill">{{ note.department }} &bull; {{ note.subject }}</span>
+            <h3 class="note-card-title">
+              <a href="{{ url_for('note_detail', note_id=note.id) }}">{{ note.title }}</a>
+            </h3>
+            <p class="note-card-desc">{{ note.description }}</p>
+
+            <div class="note-tags-row">
+              {% for tag in note.tag_list[:3] %}
+                <span class="tag-badge">#{{ tag }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="note-card-meta">
+              <div class="note-uploader">
+                <span class="avatar-mini">{{ note.uploader.initials if note.uploader else 'U' }}</span>
+                <span>{{ note.uploader.full_name if note.uploader else 'Student' }}</span>
+              </div>
+              <div class="note-metrics-badge">
+                <span title="File size"><i class="fa-solid fa-hard-drive"></i> {{ note.formatted_size }}</span>
+              </div>
+            </div>
+
+            <div class="note-card-meta" style="border-top: none; padding-top: 0.35rem; font-size: 0.775rem;">
+              <span><i class="fa-regular fa-calendar"></i> {{ note.created_at.strftime('%b %d, %Y') }}</span>
+              <div class="note-metrics-badge">
+                <span title="Downloads"><i class="fa-solid fa-download"></i> {{ note.download_count }}</span>
+                <span title="Views"><i class="fa-solid fa-eye"></i> {{ note.view_count }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="note-card-footer">
+            <a href="{{ url_for('note_detail', note_id=note.id) }}" class="btn btn-secondary btn-sm" style="flex: 1;">
+              <i class="fa-solid fa-eye"></i> View & Preview
+            </a>
+            <a href="{{ url_for('download_note', note_id=note.id) }}" class="btn btn-primary btn-sm" title="Direct Download">
+              <i class="fa-solid fa-download"></i> Download
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pagination.pages > 1 %}
+      <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 3rem;">
+        {% if pagination.has_prev %}
+          <a href="{{ url_for('library', page=pagination.prev_num, q=search_query, department=selected_dept, semester=selected_semester, format=selected_format, sort=sort_by) }}" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left"></i> Previous
+          </a>
+        {% endif %}
+
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+            {% if p == pagination.page %}
+              <span class="btn btn-primary btn-sm">{{ p }}</span>
+            {% else %}
+              <a href="{{ url_for('library', page=p, q=search_query, department=selected_dept, semester=selected_semester, format=selected_format, sort=sort_by) }}" class="btn btn-secondary btn-sm">
+                {{ p }}
+              </a>
+            {% endif %}
+          {% else %}
+            <span style="color: var(--text-muted); padding: 0 0.25rem;">&hellip;</span>
+          {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+          <a href="{{ url_for('library', page=pagination.next_num, q=search_query, department=selected_dept, semester=selected_semester, format=selected_format, sort=sort_by) }}" class="btn btn-secondary btn-sm">
+            Next <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  {% else %}
+    <!-- Empty State -->
+    <div style="text-align: center; padding: 4.5rem 1.5rem; background: #ffffff; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+      <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem auto;">
+        <i class="fa-solid fa-folder-open"></i>
+      </div>
+      <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">No Notes Found</h3>
+      <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto 1.5rem auto;">
+        We couldn't find any notes matching your current search or filter filters. Try searching with different keywords or reset your filters.
+      </p>
+      <div style="display: flex; gap: 0.75rem; justify-content: center;">
+        <a href="{{ url_for('library') }}" class="btn btn-outline-primary">
+          <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+        </a>
+        <a href="{{ url_for('upload') }}" class="btn btn-primary">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Upload Notes for this Subject
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+

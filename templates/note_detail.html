@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}{{ note.title }} | Universal Notes Sharing Platform{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+
+  <!-- Breadcrumbs -->
+  <nav style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{{ url_for('index') }}" style="color: var(--text-muted);"><i class="fa-solid fa-house"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('library') }}" style="color: var(--text-muted);">Library</a>
+    <span>/</span>
+    <a href="{{ url_for('library', department=note.department) }}" style="color: var(--text-muted);">{{ note.department }}</a>
+    <span>/</span>
+    <span style="color: var(--primary-600); font-weight: 600;">{{ note.title[:40] }}...</span>
+  </nav>
+
+  <div class="detail-layout">
+
+    <!-- Main Content Area -->
+    <div class="detail-main">
+      
+      <!-- Badges -->
+      <div class="detail-header-badges">
+        <span class="file-type-badge file-type-{{ note.file_type.lower() }}">
+          <i class="fa-solid {{ note.file_icon }}"></i> {{ note.file_type.upper() }} DOCUMENT
+        </span>
+        <span class="badge-semester">Semester {{ note.semester }}</span>
+        <span class="badge-status badge-admin" style="font-size: 0.75rem;">
+          <i class="fa-solid fa-graduation-cap"></i> {{ note.department }}
+        </span>
+        {% if note.is_featured %}
+          <span class="badge-status badge-featured">
+            <i class="fa-solid fa-star"></i> Featured
+          </span>
+        {% endif %}
+      </div>
+
+      <!-- Title -->
+      <h1 class="detail-title">{{ note.title }}</h1>
+      <div style="font-size: 1.1rem; color: var(--primary-700); font-weight: 600; margin-bottom: 1rem;">
+        <i class="fa-solid fa-book-bookmark"></i> Subject: {{ note.subject }}
+      </div>
+
+      <!-- Meta Strip -->
+      <div class="detail-meta-strip">
+        <div class="note-uploader">
+          <span class="avatar-mini" style="width: 28px; height: 28px; font-size: 0.75rem;">
+            {{ note.uploader.initials if note.uploader else 'U' }}
+          </span>
+          <span>Uploaded by <strong>{{ note.uploader.full_name if note.uploader else 'Anonymous' }}</strong></span>
+        </div>
+        <div>
+          <i class="fa-regular fa-calendar"></i> {{ note.created_at.strftime('%B %d, %Y') }}
+        </div>
+        <div>
+          <i class="fa-solid fa-download"></i> <strong>{{ note.download_count }}</strong> downloads
+        </div>
+        <div>
+          <i class="fa-solid fa-eye"></i> <strong>{{ note.view_count }}</strong> views
+        </div>
+      </div>
+
+      <!-- In-Browser Document Preview Container -->
+      <div class="document-preview-container">
+        <div class="preview-top-toolbar">
+          <span><i class="fa-solid fa-file-lines"></i> In-Browser Document Viewer</span>
+          <div style="display: flex; gap: 0.75rem;">
+            <a href="{{ url_for('preview_note', note_id=note.id) }}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.65rem; font-size: 0.75rem;">
+              <i class="fa-solid fa-up-right-from-square"></i> Open In New Tab
+            </a>
+          </div>
+        </div>
+
+        {% if note.file_type.lower() == 'pdf' %}
+          <iframe src="{{ url_for('preview_note', note_id=note.id) }}#toolbar=1" class="preview-frame" title="PDF Preview"></iframe>
+        {% else %}
+          <div class="non-pdf-preview">
+            <i class="fa-solid {{ note.file_icon }}"></i>
+            <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">
+              {{ note.original_filename }}
+            </h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 440px; margin: 0 auto 1.5rem auto;">
+              This is a native <strong>{{ note.file_type.upper() }}</strong> document. You can download and inspect it directly with your office or presentation suite.
+            </p>
+            <a href="{{ url_for('download_note', note_id=note.id) }}" class="btn btn-primary btn-lg">
+              <i class="fa-solid fa-cloud-arrow-down"></i> Download {{ note.formatted_size }}
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Note Description -->
+      <div style="margin-top: 2rem;">
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem;">
+          <i class="fa-solid fa-align-left text-primary"></i> Description & Syllabus Details
+        </h3>
+        <div style="color: var(--text-secondary); line-height: 1.8; white-space: pre-line; background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          {{ note.description }}
+        </div>
+      </div>
+
+      <!-- Tags Section -->
+      {% if note.tag_list %}
+        <div style="margin-top: 2rem;">
+          <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem;">
+            <i class="fa-solid fa-tags text-primary"></i> Keywords & Topic Tags
+          </h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for tag in note.tag_list %}
+              <a href="{{ url_for('library', q=tag) }}" class="tag-badge" style="font-size: 0.85rem; padding: 0.35rem 0.75rem; background: var(--primary-50); color: var(--primary-700); border: 1px solid var(--primary-200);">
+                #{{ tag }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Author / Admin Actions -->
+      {% if current_user and (current_user.id == note.user_id or current_user.is_admin) %}
+        <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+          <div style="font-size: 0.875rem; color: var(--text-muted);">
+            <i class="fa-solid fa-gear"></i> Management options for note owner / administrator:
+          </div>
+          <div style="display: flex; gap: 0.75rem;">
+            <a href="{{ url_for('edit_note', note_id=note.id) }}" class="btn btn-outline-primary btn-sm">
+              <i class="fa-solid fa-pen-to-square"></i> Edit Note
+            </a>
+            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteNote('{{ note.id }}', '{{ note.title|replace('\'', '\\\'') }}')">
+              <i class="fa-solid fa-trash-can"></i> Delete Note
+            </button>
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="detail-sidebar">
+
+      <!-- Prominent Download Box -->
+      <div class="download-action-card">
+        <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.35rem;">
+          Free Academic Download
+        </h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          No registration or credit card needed. Instant direct download.
+        </p>
+
+        <a href="{{ url_for('download_note', note_id=note.id) }}" class="btn btn-primary btn-block btn-lg" style="margin-bottom: 0.75rem;">
+          <i class="fa-solid fa-cloud-arrow-down"></i> Download Now
+        </a>
+
+        <div class="file-meta-pill">
+          <i class="fa-solid fa-file-circle-check"></i> {{ note.original_filename }} &bull; {{ note.formatted_size }}
+        </div>
+
+        <button type="button" class="btn btn-secondary btn-block btn-sm" style="margin-top: 1rem;" onclick="copyToClipboard(window.location.href, this)">
+          <i class="fa-solid fa-share-nodes"></i> Share Note Link
+        </button>
+      </div>
+
+      <!-- Quick Info Card -->
+      <div class="info-card">
+        <h4 class="info-card-title">Document Summary</h4>
+        <div class="info-item">
+          <span class="info-label">Format</span>
+          <span class="info-val">{{ note.file_type.upper() }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">File Size</span>
+          <span class="info-val">{{ note.formatted_size }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Department</span>
+          <span class="info-val">{{ note.department }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Semester</span>
+          <span class="info-val">Semester {{ note.semester }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Uploaded</span>
+          <span class="info-val">{{ note.created_at.strftime('%b %d, %Y') }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Contributor</span>
+          <span class="info-val">{{ note.uploader.full_name if note.uploader else 'Student' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Access Level</span>
+          <span class="info-val text-success" style="color: #059669;">Public Open Access</span>
+        </div>
+      </div>
+
+      <!-- Related Notes Card -->
+      {% if related_notes %}
+        <div class="info-card">
+          <h4 class="info-card-title">Related Notes in {{ note.department }}</h4>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for rnote in related_notes %}
+              <a href="{{ url_for('note_detail', note_id=rnote.id) }}" style="display: block; padding: 0.5rem; border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--primary-50)'" onmouseout="this.style.background='transparent'">
+                <div style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary); margin-bottom: 0.2rem;">
+                  {{ rnote.title }}
+                </div>
+                <div style="font-size: 0.775rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                  <span>Sem {{ rnote.semester }} &bull; {{ rnote.file_type.upper() }}</span>
+                  <span><i class="fa-solid fa-download"></i> {{ rnote.download_count }}</span>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteNoteModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Confirm Deletion</h3>
+      <button class="modal-close-btn" onclick="closeModal('deleteNoteModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom: 1rem;">
+        Are you sure you want to permanently delete this note?
+      </p>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 0.85rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem;" id="deleteNoteTitle">
+      </div>
+      <p style="margin-top: 1rem; font-size: 0.825rem; color: var(--text-muted);">
+        This action cannot be undone. The document file will be permanently removed from server storage.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('deleteNoteModal')">Cancel</button>
+      <form id="deleteNoteForm" method="POST" style="margin: 0;">
+        <button type="submit" class="btn btn-danger">Yes, Delete Note</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+

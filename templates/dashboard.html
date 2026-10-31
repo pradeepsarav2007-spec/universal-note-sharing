@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard | Universal Notes Sharing Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container dashboard-layout">
+
+  <!-- Dashboard Profile Hero -->
+  <div class="dashboard-hero">
+    <div class="dashboard-user-info">
+      <div class="dashboard-avatar">
+        {{ user.initials }}
+      </div>
+      <div class="dashboard-user-details">
+        <h2>{{ user.full_name }}</h2>
+        <p>
+          <i class="fa-solid fa-graduation-cap"></i> {{ user.department or 'General Academic Scholar' }} &bull; 
+          <i class="fa-regular fa-calendar"></i> Member since {{ user.created_at.strftime('%B %Y') }}
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <a href="{{ url_for('upload') }}" class="btn btn-primary" style="background: #ffffff; color: var(--primary-800); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Upload New Note
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Cards Row -->
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-icon-box metric-blue">
+        <i class="fa-solid fa-file-lines"></i>
+      </div>
+      <div class="metric-content">
+        <div class="val">{{ total_notes_uploaded }}</div>
+        <div class="lbl">Uploaded Notes</div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon-box metric-green">
+        <i class="fa-solid fa-cloud-arrow-down"></i>
+      </div>
+      <div class="metric-content">
+        <div class="val">{{ total_downloads_received }}</div>
+        <div class="lbl">Downloads Received</div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon-box metric-purple">
+        <i class="fa-solid fa-eye"></i>
+      </div>
+      <div class="metric-content">
+        <div class="val">{{ total_views_received }}</div>
+        <div class="lbl">Total Views</div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon-box metric-amber">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+      </div>
+      <div class="metric-content">
+        <div class="val">{{ recent_downloads|length }}</div>
+        <div class="lbl">Downloaded Materials</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="dashboard-tabs">
+    <button type="button" class="tab-btn active" data-target="tab-my-notes">
+      <i class="fa-solid fa-folder"></i> My Uploaded Notes ({{ my_notes|length }})
+    </button>
+    <button type="button" class="tab-btn" data-target="tab-downloads">
+      <i class="fa-solid fa-clock-rotate-left"></i> Download History ({{ recent_downloads|length }})
+    </button>
+    <button type="button" class="tab-btn" data-target="tab-profile">
+      <i class="fa-solid fa-user-gear"></i> Profile & Security Settings
+    </button>
+  </div>
+
+  <!-- TAB 1: MY UPLOADED NOTES -->
+  <div class="tab-content-panel active" id="tab-my-notes">
+    {% if my_notes %}
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Document & Title</th>
+              <th>Subject & Dept</th>
+              <th>Semester</th>
+              <th>Size</th>
+              <th>Downloads</th>
+              <th>Uploaded Date</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for note in my_notes %}
+              <tr>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="file-type-badge file-type-{{ note.file_type.lower() }}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">
+                      {{ note.file_type.upper() }}
+                    </span>
+                    <div>
+                      <a href="{{ url_for('note_detail', note_id=note.id) }}" style="font-weight: 700; color: var(--text-primary);">
+                        {{ note.title }}
+                      </a>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span style="font-weight: 600; color: var(--primary-700);">{{ note.subject }}</span>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">{{ note.department }}</div>
+                </td>
+                <td>
+                  <span class="badge-semester">Sem {{ note.semester }}</span>
+                </td>
+                <td>{{ note.formatted_size }}</td>
+                <td>
+                  <span style="font-weight: 700; color: var(--text-primary);">
+                    <i class="fa-solid fa-download text-muted" style="font-size: 0.8rem;"></i> {{ note.download_count }}
+                  </span>
+                </td>
+                <td>{{ note.created_at.strftime('%b %d, %Y') }}</td>
+                <td style="text-align: right;">
+                  <div style="display: inline-flex; gap: 0.4rem;">
+                    <a href="{{ url_for('note_detail', note_id=note.id) }}" class="btn btn-secondary btn-sm" title="View Note">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <a href="{{ url_for('edit_note', note_id=note.id) }}" class="btn btn-outline-primary btn-sm" title="Edit Note">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </a>
+                    <button type="button" class="btn btn-danger btn-sm" title="Delete Note" onclick="confirmDeleteNote('{{ note.id }}', '{{ note.title|replace('\'', '\\\'') }}')">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 3.5rem 1.5rem; background: #ffffff; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+        <div style="font-size: 2.5rem; color: var(--primary-400); margin-bottom: 1rem;">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">You haven't uploaded any notes yet</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 440px; margin: 0 auto 1.5rem auto;">
+          Upload your class notes, laboratory guides, or formula cheat sheets to help other students and build your academic profile!
+        </p>
+        <a href="{{ url_for('upload') }}" class="btn btn-primary">
+          <i class="fa-solid fa-plus"></i> Upload Your First Note
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 2: DOWNLOAD HISTORY -->
+  <div class="tab-content-panel" id="tab-downloads">
+    {% if recent_downloads %}
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Document Title</th>
+              <th>Subject</th>
+              <th>Department</th>
+              <th>Format</th>
+              <th>Downloaded On</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in recent_downloads %}
+              {% if item.note %}
+                <tr>
+                  <td>
+                    <a href="{{ url_for('note_detail', note_id=item.note.id) }}" style="font-weight: 700;">
+                      {{ item.note.title }}
+                    </a>
+                  </td>
+                  <td>{{ item.note.subject }}</td>
+                  <td>{{ item.note.department }}</td>
+                  <td>
+                    <span class="file-type-badge file-type-{{ item.note.file_type.lower() }}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">
+                      {{ item.note.file_type.upper() }}
+                    </span>
+                  </td>
+                  <td>{{ item.downloaded_at.strftime('%b %d, %Y at %I:%M %p') }}</td>
+                  <td style="text-align: right;">
+                    <a href="{{ url_for('download_note', note_id=item.note.id) }}" class="btn btn-primary btn-sm">
+                      <i class="fa-solid fa-download"></i> Download Again
+                    </a>
+                  </td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 3.5rem 1.5rem; background: #ffffff; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+        <div style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 1rem;">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">No Download History</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          You haven't downloaded any notes while signed into your account yet.
+        </p>
+        <a href="{{ url_for('library') }}" class="btn btn-primary">
+          <i class="fa-solid fa-magnifying-glass"></i> Explore Notes Library
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 3: PROFILE SETTINGS -->
+  <div class="tab-content-panel" id="tab-profile">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      
+      <!-- Profile Information -->
+      <div class="detail-main">
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+          <i class="fa-regular fa-id-card text-primary"></i> Personal Profile Information
+        </h3>
+
+        <form action="{{ url_for('update_profile') }}" method="POST">
+          <div class="filter-group" style="margin-bottom: 1.25rem;">
+            <label for="full_name">Full Name</label>
+            <input type="text" name="full_name" id="full_name" class="form-control" value="{{ user.full_name }}" required>
+          </div>
+
+          <div class="filter-group" style="margin-bottom: 1.25rem;">
+            <label for="email_disabled">Email Address (Account Identifier)</label>
+            <input type="email" id="email_disabled" class="form-control" value="{{ user.email }}" disabled style="background-color: #f1f5f9; cursor: not-allowed;">
+          </div>
+
+          <div class="filter-group" style="margin-bottom: 1.5rem;">
+            <label for="user_dept">Department / Major</label>
+            <select name="department" id="user_dept" class="form-select">
+              <option value="">Select Department...</option>
+              {% for dept in global_departments %}
+                <option value="{{ dept.name }}" {% if user.department == dept.name %}selected{% endif %}>
+                  {{ dept.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Update Profile
+          </button>
+        </form>
+      </div>
+
+      <!-- Security / Password Change -->
+      <div class="detail-main">
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+          <i class="fa-solid fa-lock text-primary"></i> Security & Password
+        </h3>
+
+        <form action="{{ url_for('change_password') }}" method="POST">
+          <div class="filter-group" style="margin-bottom: 1.25rem;">
+            <label for="current_password">Current Password</label>
+            <input type="password" name="current_password" id="current_password" class="form-control" placeholder="••••••••" required>
+          </div>
+
+          <div class="filter-group" style="margin-bottom: 1.25rem;">
+            <label for="new_password">New Password (Minimum 6 characters)</label>
+            <input type="password" name="new_password" id="new_password" class="form-control" placeholder="••••••••" minlength="6" required>
+          </div>
+
+          <div class="filter-group" style="margin-bottom: 1.5rem;">
+            <label for="confirm_new_password">Confirm New Password</label>
+            <input type="password" name="confirm_new_password" id="confirm_new_password" class="form-control" placeholder="••••••••" minlength="6" required>
+          </div>
+
+          <button type="submit" class="btn btn-outline-primary">
+            <i class="fa-solid fa-key"></i> Update Password
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteNoteModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Confirm Deletion</h3>
+      <button class="modal-close-btn" onclick="closeModal('deleteNoteModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom: 1rem;">
+        Are you sure you want to permanently delete this note?
+      </p>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 0.85rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem;" id="deleteNoteTitle">
+      </div>
+      <p style="margin-top: 1rem; font-size: 0.825rem; color: var(--text-muted);">
+        This action is irreversible. The document file will be purged from the server uploads directory.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('deleteNoteModal')">Cancel</button>
+      <form id="deleteNoteForm" method="POST" style="margin: 0;">
+        <button type="submit" class="btn btn-danger">Yes, Delete Note</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+

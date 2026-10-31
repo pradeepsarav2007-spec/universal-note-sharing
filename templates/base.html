@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Universal Notes Sharing Platform | Free Educational Notes & Study Resources{% endblock %}</title>
+  
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Core Theme CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar" id="mainNavbar">
+    <div class="container nav-container">
+      
+      <!-- Logo & Name -->
+      <a href="{{ url_for('index') }}" class="nav-brand">
+        <div class="brand-icon-wrapper">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="brand-text">Universal<span>Notes</span></div>
+      </a>
+
+      <!-- Quick Search Bar in Navbar -->
+      <div class="nav-search">
+        <i class="fa-solid fa-magnifying-glass nav-search-icon"></i>
+        <input type="text" id="navSearchInput" placeholder="Quick search notes, subjects..." autocomplete="off">
+        <div class="nav-search-dropdown" id="navSearchDropdown"></div>
+      </div>
+
+      <!-- Navigation Menu Links -->
+      <ul class="nav-menu" id="navMenu">
+        <li>
+          <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+            <i class="fa-solid fa-house"></i> Home
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('library') }}" class="nav-link {% if request.endpoint == 'library' %}active{% endif %}">
+            <i class="fa-solid fa-book-open"></i> Notes Library
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('upload') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Upload Notes
+          </a>
+        </li>
+
+        <!-- Authentication / User Menu -->
+        {% if current_user %}
+          <li class="user-menu-dropdown">
+            <button class="user-avatar-btn" id="userAvatarBtn" type="button">
+              <span class="avatar-circle">{{ current_user.initials }}</span>
+              <span style="font-weight: 600; font-size: 0.875rem;">{{ current_user.full_name.split()[0] }}</span>
+              {% if current_user.is_admin %}
+                <span class="badge-status badge-admin" style="font-size: 0.65rem;">ADMIN</span>
+              {% endif %}
+              <i class="fa-solid fa-angle-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+            </button>
+            <div class="user-dropdown-menu" id="userDropdownMenu">
+              <div class="dropdown-header">
+                <div class="name">{{ current_user.full_name }}</div>
+                <div class="email">{{ current_user.email }}</div>
+              </div>
+              <a href="{{ url_for('user_dashboard') }}" class="dropdown-item">
+                <i class="fa-solid fa-gauge-high"></i> Student Dashboard
+              </a>
+              <a href="{{ url_for('upload') }}" class="dropdown-item">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i> Upload New Note
+              </a>
+              {% if current_user.is_admin %}
+                <a href="{{ url_for('admin_dashboard') }}" class="dropdown-item" style="color: var(--primary-700); font-weight: 600;">
+                  <i class="fa-solid fa-shield-halved"></i> Admin Control Panel
+                </a>
+              {% endif %}
+              <div class="dropdown-divider"></div>
+              <a href="{{ url_for('logout') }}" class="dropdown-item text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+              </a>
+            </div>
+          </li>
+        {% else %}
+          <li>
+            <a href="{{ url_for('login') }}" class="nav-link">Sign In</a>
+          </li>
+          <li>
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Create Account</a>
+          </li>
+        {% endif %}
+      </ul>
+
+      <!-- Mobile Nav Hamburger Button -->
+      <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- Flash Messages Alert Bar -->
+  <div class="container alert-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <div class="alert-content">
+              {% if category == 'success' %}
+                <i class="fa-solid fa-circle-check"></i>
+              {% elif category == 'danger' %}
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              {% elif category == 'warning' %}
+                <i class="fa-solid fa-circle-exclamation"></i>
+              {% else %}
+                <i class="fa-solid fa-circle-info"></i>
+              {% endif %}
+              <span>{{ message }}</span>
+            </div>
+            <button type="button" class="alert-close" aria-label="Close">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Body Content -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        
+        <div>
+          <div class="footer-brand">
+            <div class="brand-icon-wrapper" style="width: 36px; height: 36px; font-size: 1rem;">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            Universal Notes
+          </div>
+          <p class="footer-desc">
+            An open educational platform empowering university students and educators worldwide to upload, discover, search, and download lecture notes and study guides for free.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="footer-heading">Quick Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('library') }}">Notes Library</a></li>
+            <li><a href="{{ url_for('upload') }}">Upload Notes</a></li>
+            <li><a href="{{ url_for('login') }}">Sign In</a></li>
+            <li><a href="{{ url_for('register') }}">Create Account</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-heading">Top Departments</h4>
+          <ul class="footer-links">
+            {% for dept in global_departments[:5] %}
+              <li><a href="{{ url_for('library', department=dept.name) }}">{{ dept.name }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-heading">Community & Open Access</h4>
+          <p class="footer-desc" style="font-size: 0.85rem; margin-bottom: 1rem;">
+            Public notes are freely accessible to all students. No mandatory account required for reading and downloading materials.
+          </p>
+          <div style="display: flex; gap: 0.75rem;">
+            <a href="{{ url_for('upload') }}" class="btn btn-primary btn-sm">
+              <i class="fa-solid fa-upload"></i> Share Your Notes
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          &copy; {{ current_year }} <strong>Universal Notes Sharing Platform</strong>. All rights reserved.
+        </div>
+        <div style="display: flex; gap: 1.5rem; font-size: 0.85rem;">
+          <span><i class="fa-solid fa-shield-halved"></i> Academic Integrity</span>
+          <span><i class="fa-solid fa-file-pdf"></i> Verified Documents</span>
+          <span><i class="fa-solid fa-globe"></i> Universal Access</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Core JavaScript -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+
+</body>
+</html>
+

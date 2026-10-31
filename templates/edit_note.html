@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Note | {{ note.title }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+
+  <div class="upload-card">
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="width: 56px; height: 56px; border-radius: var(--radius-md); background: var(--primary-50); color: var(--primary-600); display: inline-flex; align-items: center; justify-content: center; font-size: 1.75rem; margin-bottom: 1rem;">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </div>
+      <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">Edit Note Details</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Update title, metadata, description, or optionally replace the attached document.
+      </p>
+    </div>
+
+    <form action="{{ url_for('edit_note', note_id=note.id) }}" method="POST" enctype="multipart/form-data">
+      
+      <div style="display: grid; grid-template-columns: 1fr; gap: 1.25rem;">
+        
+        <!-- Note Title -->
+        <div class="filter-group">
+          <label for="title">Notes Title <span class="text-danger" style="color: #ef4444;">*</span></label>
+          <input type="text" name="title" id="title" class="form-control" value="{{ note.title }}" required>
+        </div>
+
+        <!-- Subject and Department (2 columns) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="filter-group">
+            <label for="subject">Subject Name <span class="text-danger" style="color: #ef4444;">*</span></label>
+            <input type="text" name="subject" id="subject" class="form-control" value="{{ note.subject }}" required>
+          </div>
+
+          <div class="filter-group">
+            <label for="department">Department <span class="text-danger" style="color: #ef4444;">*</span></label>
+            <select name="department" id="department" class="form-select" required>
+              {% for dept in departments %}
+                <option value="{{ dept.name }}" {% if note.department == dept.name %}selected{% endif %}>
+                  {{ dept.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Semester & Tags -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="filter-group">
+            <label for="semester">Semester <span class="text-danger" style="color: #ef4444;">*</span></label>
+            <select name="semester" id="semester" class="form-select" required>
+              {% for s in range(1, 9) %}
+                <option value="{{ s }}" {% if note.semester == s %}selected{% endif %}>
+                  Semester {{ s }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="tags">Keywords / Tags</label>
+            <input type="text" name="tags" id="tags" class="form-control" value="{{ note.tags or '' }}">
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="filter-group">
+          <label for="description">Detailed Description <span class="text-danger" style="color: #ef4444;">*</span></label>
+          <textarea name="description" id="description" class="form-control" rows="5" required>{{ note.description }}</textarea>
+        </div>
+
+        <!-- File Replacement (Optional) -->
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-top: 0.5rem;">
+          <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.35rem;">
+            Attached Document (Leave empty to keep existing file)
+          </label>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            Current file: <strong>{{ note.original_filename }}</strong> ({{ note.formatted_size }})
+          </div>
+          <input type="file" name="file" class="form-control" accept=".pdf,.docx,.doc,.pptx,.ppt,.txt">
+        </div>
+
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+        <a href="{{ url_for('note_detail', note_id=note.id) }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Save Changes
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+{% endblock %}
+

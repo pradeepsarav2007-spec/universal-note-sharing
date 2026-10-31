@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Control Center | Universal Notes Sharing Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container dashboard-layout">
+
+  <!-- Admin Header Banner -->
+  <div class="dashboard-hero" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+    <div class="dashboard-user-info">
+      <div class="dashboard-avatar" style="background: #ffffff; color: var(--primary-900);">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div class="dashboard-user-details">
+        <h2>Administrator Control Center</h2>
+        <p>
+          System administration, content moderation, spam elimination, and category management.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <span class="badge-status badge-admin" style="background: #ffffff; color: var(--primary-900); font-size: 0.85rem; padding: 0.4rem 0.85rem;">
+        <i class="fa-solid fa-lock"></i> Super Admin Mode
+      </span>
+    </div>
+  </div>
+
+  <!-- Admin System Metrics -->
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-icon-box metric-blue">
+        <i class="fa-solid fa-users"></i>
+      </div>
+      <div class="metric-content">
+        <div class="val">{{ total_users }}</div>
+        <div class="lbl">Registered Accounts</div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon-box metric-purple">
+        <i class="fa-solid fa-book-bookmark"></i>
+      </div>
+      <div class="metric-content">
+        <div class="val">{{ total_notes }}</div>
+        <div class="lbl">Published Notes</div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon-box metric-green">
+        <i class="fa-solid fa-cloud-arrow-down"></i>
+      </div>
+      <div class="metric-content">
+        <div class="val">{{ total_downloads }}</div>
+        <div class="lbl">Total File Downloads</div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon-box metric-amber">
+        <i class="fa-solid fa-hard-drive"></i>
+      </div>
+      <div class="metric-content">
+        <div class="val">{{ storage_mb }} MB</div>
+        <div class="lbl">Server Storage Used</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Table Search Input -->
+  <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.75rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+    <i class="fa-solid fa-magnifying-glass text-muted"></i>
+    <input type="text" id="adminTableSearch" placeholder="Filter active table rows by title, name, email, department..." style="border: none; outline: none; width: 100%; font-size: 0.9rem;">
+  </div>
+
+  <!-- Admin Tabs -->
+  <div class="dashboard-tabs">
+    <button type="button" class="tab-btn active" data-target="tab-admin-notes">
+      <i class="fa-solid fa-file-shield"></i> Content Moderation & Spam Removal ({{ notes|length }})
+    </button>
+    <button type="button" class="tab-btn" data-target="tab-admin-users">
+      <i class="fa-solid fa-users-gear"></i> User Accounts Management ({{ users|length }})
+    </button>
+    <button type="button" class="tab-btn" data-target="tab-admin-departments">
+      <i class="fa-solid fa-layer-group"></i> Categories & Departments ({{ departments|length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: CONTENT MODERATION & SPAM REMOVAL -->
+  <div class="tab-content-panel active" id="tab-admin-notes">
+    <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; color: var(--text-muted);">
+        Inspect all materials submitted across the platform. You can remove spam or copyright infringing files immediately.
+      </span>
+      <a href="{{ url_for('upload') }}" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-plus"></i> Upload Official Note
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Document / Title</th>
+            <th>Uploader</th>
+            <th>Department & Sem</th>
+            <th>Downloads</th>
+            <th>Status</th>
+            <th>Uploaded</th>
+            <th style="text-align: right;">Moderation Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for note in notes %}
+            <tr>
+              <td>
+                <div style="font-weight: 700; color: var(--text-primary);">
+                  <a href="{{ url_for('note_detail', note_id=note.id) }}" target="_blank">
+                    {{ note.title }}
+                  </a>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                  <i class="fa-regular fa-file"></i> {{ note.original_filename }} &bull; {{ note.formatted_size }}
+                </div>
+              </td>
+              <td>
+                <div style="font-weight: 600;">{{ note.uploader.full_name if note.uploader else 'Anonymous' }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ note.uploader.email if note.uploader else '-' }}</div>
+              </td>
+              <td>
+                <div>{{ note.department }}</div>
+                <span class="badge-semester">Sem {{ note.semester }}</span>
+              </td>
+              <td>
+                <strong>{{ note.download_count }}</strong>
+              </td>
+              <td>
+                {% if note.is_featured %}
+                  <span class="badge-status badge-featured"><i class="fa-solid fa-star"></i> Featured</span>
+                {% else %}
+                  <span class="badge-status badge-active">Active</span>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.8rem; color: var(--text-muted);">
+                {{ note.created_at.strftime('%Y-%m-%d') }}
+              </td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 0.35rem;">
+                  <!-- Toggle Featured -->
+                  <form action="{{ url_for('admin_toggle_featured', note_id=note.id) }}" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary btn-sm" title="Toggle Featured on Homepage">
+                      <i class="fa-solid fa-star {% if note.is_featured %}text-warning{% endif %}"></i>
+                    </button>
+                  </form>
+                  <!-- View note -->
+                  <a href="{{ url_for('note_detail', note_id=note.id) }}" class="btn btn-secondary btn-sm" title="View Details">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  </a>
+                  <!-- Delete Note / Spam -->
+                  <button type="button" class="btn btn-danger btn-sm" title="Remove Spam / Unauthorized Material" onclick="confirmDeleteNote('{{ note.id }}', '{{ note.title|replace('\'', '\\\'') }}')">
+                    <i class="fa-solid fa-trash-can"></i> Remove
+                  </button>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 2: USER ACCOUNTS MANAGEMENT -->
+  <div class="tab-content-panel" id="tab-admin-users">
+    <div style="margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+      Manage registered students and educators. Toggle active status to ban spammers, or promote users to administrative roles.
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Notes Contributed</th>
+            <th>Joined</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                  <span class="avatar-mini">{{ u.initials }}</span>
+                  <strong style="color: var(--text-primary);">{{ u.full_name }}</strong>
+                </div>
+              </td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.department or 'N/A' }}</td>
+              <td>
+                {% if u.is_admin %}
+                  <span class="badge-status badge-admin">ADMIN</span>
+                {% else %}
+                  <span class="badge-status" style="background: #f1f5f9; color: var(--text-secondary);">STUDENT</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if u.is_active %}
+                  <span class="badge-status badge-active"><i class="fa-solid fa-check"></i> Active</span>
+                {% else %}
+                  <span class="badge-status badge-suspended"><i class="fa-solid fa-ban"></i> Suspended</span>
+                {% endif %}
+              </td>
+              <td>{{ u.notes.count() }}</td>
+              <td style="font-size: 0.8rem; color: var(--text-muted);">
+                {{ u.created_at.strftime('%Y-%m-%d') }}
+              </td>
+              <td style="text-align: right;">
+                {% if u.id != current_user.id %}
+                  <div style="display: inline-flex; gap: 0.35rem;">
+                    <!-- Toggle Active / Ban -->
+                    <form action="{{ url_for('admin_toggle_user_status', user_id=u.id) }}" method="POST" style="margin: 0;">
+                      <button type="submit" class="btn btn-sm {% if u.is_active %}btn-secondary{% else %}btn-primary{% endif %}" title="{% if u.is_active %}Suspend User{% else %}Activate User{% endif %}">
+                        {% if u.is_active %}<i class="fa-solid fa-ban text-danger"></i> Suspend{% else %}<i class="fa-solid fa-check text-success"></i> Activate{% endif %}
+                      </button>
+                    </form>
+                    <!-- Toggle Admin Role -->
+                    <form action="{{ url_for('admin_toggle_user_role', user_id=u.id) }}" method="POST" style="margin: 0;">
+                      <button type="submit" class="btn btn-secondary btn-sm" title="Toggle Admin Role">
+                        <i class="fa-solid fa-user-shield"></i>
+                      </button>
+                    </form>
+                    <!-- Delete User -->
+                    <form action="{{ url_for('admin_delete_user', user_id=u.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete user {{ u.full_name }} and all their uploaded notes? This cannot be undone.');">
+                      <button type="submit" class="btn btn-danger btn-sm" title="Delete Account">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </form>
+                  </div>
+                {% else %}
+                  <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Current Session</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 3: CATEGORIES & DEPARTMENTS MANAGEMENT -->
+  <div class="tab-content-panel" id="tab-admin-departments">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <span style="font-size: 0.85rem; color: var(--text-muted);">
+        Create and organize academic faculties and course categories for notes classification.
+      </span>
+      <button type="button" class="btn btn-primary btn-sm" onclick="openModal('addDeptModal')">
+        <i class="fa-solid fa-plus"></i> Add New Department
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Icon</th>
+            <th>Department Name</th>
+            <th>Code</th>
+            <th>Description</th>
+            <th>Notes Assigned</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dept in departments %}
+            <tr>
+              <td>
+                <div class="avatar-mini" style="background: var(--primary-50); color: var(--primary-600); font-size: 0.9rem;">
+                  <i class="fa-solid {{ dept.icon }}"></i>
+                </div>
+              </td>
+              <td><strong style="color: var(--text-primary);">{{ dept.name }}</strong></td>
+              <td><span class="badge-status badge-admin">{{ dept.code }}</span></td>
+              <td style="max-width: 320px; font-size: 0.85rem; color: var(--text-secondary);">
+                {{ dept.description }}
+              </td>
+              <td>
+                <span class="badge-semester">{{ dept.note_count }} notes</span>
+              </td>
+              <td style="text-align: right;">
+                {% if dept.note_count == 0 %}
+                  <form action="{{ url_for('admin_delete_department', dept_id=dept.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete department {{ dept.name }}?');">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                      <i class="fa-solid fa-trash-can"></i> Delete
+                    </button>
+                  </form>
+                {% else %}
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">In Use</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteNoteModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Moderate & Purge Material</h3>
+      <button class="modal-close-btn" onclick="closeModal('deleteNoteModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom: 1rem;">
+        Are you sure you want to permanently remove this note and delete the physical file from the server?
+      </p>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 0.85rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem;" id="deleteNoteTitle">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('deleteNoteModal')">Cancel</button>
+      <form id="deleteNoteForm" method="POST" style="margin: 0;">
+        <button type="submit" class="btn btn-danger">Purge File & Record</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal-overlay" id="addDeptModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-folder-plus text-primary"></i> Add Academic Department</h3>
+      <button class="modal-close-btn" onclick="closeModal('addDeptModal')">&times;</button>
+    </div>
+    <form action="{{ url_for('admin_add_department') }}" method="POST">
+      <div class="modal-body">
+        <div class="filter-group" style="margin-bottom: 1rem;">
+          <label for="dept_name">Department Full Name</label>
+          <input type="text" name="name" id="dept_name" class="form-control" placeholder="e.g. Biomedical Engineering" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div class="filter-group">
+            <label for="dept_code">Code (Abbr)</label>
+            <input type="text" name="code" id="dept_code" class="form-control" placeholder="e.g. BME" required>
+          </div>
+          <div class="filter-group">
+            <label for="dept_icon">FontAwesome Icon</label>
+            <input type="text" name="icon" id="dept_icon" class="form-control" value="fa-microscope" placeholder="fa-icon-name">
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="dept_desc">Department Description</label>
+          <textarea name="description" id="dept_desc" class="form-control" rows="3" placeholder="Brief description of subjects covered in this faculty..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addDeptModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Department</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+
